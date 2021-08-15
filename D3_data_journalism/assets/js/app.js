@@ -1,4 +1,3 @@
-// scatter plot margins and PXs
 var svgWidth = 800;
 var svgHeight = 600;
 
@@ -56,3 +55,149 @@ function renderYAxis(newYScale, yAxis) {
     return yAxis
 }
 
+d3.csv('assets/data/data.csv').then(function (data, err) {
+  if (err) throw err;
+
+  // data naming
+  data.forEach(function (d) {
+      d.poverty = +d.poverty;
+      d.income = +d.income;
+      d.age = +d.age;
+      d.healthcare = +d.healthcare
+      d.obesity = +d.obesity;
+      d.smokes = +d.smokes;
+  });
+
+  //Scale Functions
+  var xLinearScale = xScale(data, chosenXAxis);
+  var yLinearScale = yScale(data, chosenYAxis);
+
+  // X-Axis & Y-Axis fuctions
+  var bottomAxis = d3.axisBottom(xLinearScale);
+  var leftAxis = d3.axisLeft(yLinearScale);
+
+  var xAxis = chart.append('g').attr('transform', `translate(0, ${height})`).call(bottomAxis);
+  var yAxis = chart.append('g').call(leftAxis);
+
+  //Circles
+  var circles = chart.selectAll('circle')
+      .data(data)
+      .enter()
+      .append('circle')
+      .attr('cx', d => xLinearScale(d[chosenXAxis]))
+      .attr('cy', d => yLinearScale(d[chosenYAxis]))
+      .attr('r', 10)
+      .attr('fill', 'lightblue')
+      .attr('opacity', '.8')
+
+   // X-Axis Labels
+  var xLabelsGroup = chart.append('g')
+      .attr('transform', `translate(${width/2}, ${height + 20})`);
+  
+  var povertyLabel = xLabelsGroup.append('text')
+  .attr('x', 0)
+  .attr('y', 20)
+  .attr('value', 'poverty')
+  .classed('active', true)
+  .text('Poverty Rate (%)')
+
+  var incomeLabel = xLabelsGroup.append('text')
+  .attr('x', 0)
+  .attr('y', 40)
+  .attr('value', 'income')
+  .classed('inactive', true)
+  .text('Median Income')
+
+  var ageLabel = xLabelsGroup.append('text')
+  .attr('x', 0)
+  .attr('y', 60)
+  .attr('value', 'age')
+  .classed('inactive', true)
+  .text('Median Age')
+
+  //Y-Axis Labels
+  var yLabelsGroup = chart.append('g')
+
+  var obesityLabel = yLabelsGroup.append('text')
+  .attr("transform", "rotate(-90)")
+  .attr("y", 0 - 30)
+  .attr("x", 0 - (height / 2))
+  .attr('value', 'obesity')
+  .classed('active', true)
+  .text('Obesity Rate (% population)')
+
+  var smokesLabel = yLabelsGroup.append('text')
+  .attr("transform", "rotate(-90)")
+  .attr("y", 0 - 50)
+  .attr("x", 0 - (height / 2))
+  .attr('value', 'smokes')
+  .classed('inactive', true)
+  .text('Smokers (% population)')
+
+  var healthcareLabel = yLabelsGroup.append('text')
+  .attr("transform", "rotate(-90)")
+  .attr("y", 0 - 70)
+  .attr("x", 0 - (height / 2))
+  .attr('value', 'healthcare')
+  .classed('inactive', true)
+  .text('Healthcare Coverage (% population)')
+
+  ////////////////////////////////////////////////////////////////
+  // X-labels Event listener
+  xLabelsGroup.selectAll('text')
+  .on('click', function(){
+      var value = d3.select(this).attr('value')
+      if(value!== chosenXAxis){
+          chosenXAxis = value;
+          console.log(`New chosen X axis: ${value}`);
+
+          xLinearScale =  xScale(data, chosenXAxis);
+          xAxis = renderXAxis(xLinearScale, xAxis);
+          circles = renderCircles(circles, xLinearScale, chosenXAxis, yLinearScale, chosenYAxis);
+
+          if(chosenXAxis === 'poverty'){
+              povertyLabel.classed('inactive', false).classed('active', true);
+              incomeLabel.classed('inactive', true).classed('active', false);
+              ageLabel.classed('inactive', true).classed('active', false);
+          } else if (chosenXAxis === 'income'){
+              povertyLabel.classed('inactive', true).classed('active', false);
+              incomeLabel.classed('inactive', false).classed('active', true);
+              ageLabel.classed('inactive', true).classed('active', false);
+          } else if (chosenXAxis === 'age'){
+              povertyLabel.classed('inactive', true).classed('active', false);
+              incomeLabel.classed('inactive', true).classed('active', false);
+              ageLabel.classed('inactive', false).classed('active', true);
+          }
+      }
+
+  })
+
+  yLabelsGroup.selectAll('text')
+  .on('click', function(){
+      var value = d3.select(this).attr('value')
+      if(value!== chosenXAxis){
+          chosenYAxis = value;
+          console.log(`New chosen Y axis: ${value}`);
+
+          yLinearScale =  yScale(data, chosenYAxis);
+          yAxis = renderYAxis(yLinearScale, yAxis);
+          circles = renderCircles(circles, xLinearScale, chosenXAxis, yLinearScale, chosenYAxis);
+
+          if(chosenYAxis === 'obesity'){
+              obesityLabel.classed('inactive', false).classed('active', true);
+              smokesLabel.classed('inactive', true).classed('active', false);
+              healthcareLabel.classed('inactive', true).classed('active', false);
+          } else if (chosenYAxis === 'smokes'){
+              obesityLabel.classed('inactive', true).classed('active', false);
+              smokesLabel.classed('inactive', false).classed('active', true);
+              healthcareLabel.classed('inactive', true).classed('active', false);
+          } else if (chosenYAxis === 'healthcare'){
+              obesityLabel.classed('inactive', true).classed('active', false);
+              smokesLabel.classed('inactive', true).classed('active', false);
+              healthcareLabel.classed('inactive', false).classed('active', true);
+          }
+      }
+
+  })
+
+})
